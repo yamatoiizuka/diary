@@ -1,3 +1,6 @@
+// 色の変数定義
+$color-primary: #ffb67e;
+
 * {
   margin: 0;
   padding: 0;
@@ -61,7 +64,7 @@ body {
   height: 100vh;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  color: #ffb67e;
+  color: $color-primary;
   -ms-overflow-style: none;
   scrollbar-width: none;
 
@@ -127,7 +130,7 @@ body {
             height: 30px;
             border-radius: 50%;
             left: 50%;
-            border: 1px solid #ffb67e;
+            border: 1px solid $color-primary;
             transform: translateX(-50%);
             top: 0px;
           }
@@ -177,7 +180,7 @@ body {
 
   .nav-item {
     font-size: 22.5px;
-    color: #ffb67e;
+    color: $color-primary;
     cursor: pointer;
     font-weight: 500;
     white-space: nowrap;
