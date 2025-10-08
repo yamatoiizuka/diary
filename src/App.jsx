@@ -16,9 +16,49 @@ function App() {
   );
   const containerRef = useRef(null);
   const diaryEntries = getAllDiaryEntries();
+  const [isPlaying, setIsPlaying] = useState(true);
+  const animationRef = useRef(null);
 
   // デバッグ目盛りの表示/非表示
   const showDebugScale = false;
+
+  // 自動スクロール機能
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (isPlaying) {
+      // TODO: フレームレート非依存の実装にする（DOMHighResTimeStampを使用）
+      const pixelsPerFrame = 0.25; // 1フレームあたりのピクセル数
+
+      const animate = () => {
+        const currentScroll = container.scrollTop;
+        const maxScroll = container.scrollHeight - container.clientHeight;
+
+        if (currentScroll < maxScroll) {
+          container.scrollTop = currentScroll + pixelsPerFrame;
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          // 最下部に到達したら停止
+          setIsPlaying(false);
+        }
+      };
+
+      animationRef.current = requestAnimationFrame(animate);
+    } else {
+      // 再生停止時はアニメーションをキャンセル
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    }
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isPlaying]);
 
   // スクロールインタラクションの処理
   useEffect(() => {
@@ -151,7 +191,9 @@ function App() {
 
       <nav className="navigation">
         <div className="nav-item">再生速度</div>
-        <div className="nav-item">プレイ</div>
+        <div className="nav-item" onClick={() => setIsPlaying(!isPlaying)}>
+          {isPlaying ? "一時停止" : "プレイ"}
+        </div>
         <div className="nav-item">シャッフル</div>
       </nav>
     </div>
