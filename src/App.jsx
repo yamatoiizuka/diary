@@ -9,27 +9,16 @@ import {
 import DebugScale from "./components/DebugScale";
 
 function App() {
-  const [activeDate, setActiveDate] = useState({ month: 0, day: 3 });
-  const [currentImage, setCurrentImage] = useState(getDefaultImagePath());
+  const initialDate = { month: 0, day: 3 };
+  const [activeDate, setActiveDate] = useState(initialDate);
+  const [currentImage, setCurrentImage] = useState(
+    getImagePath(initialDate.month, initialDate.day)
+  );
   const containerRef = useRef(null);
-  const [diaryEntries, setDiaryEntries] = useState([]);
-  const isInitialized = useRef(false);
+  const diaryEntries = getAllDiaryEntries();
 
   // デバッグ目盛りの表示/非表示
   const showDebugScale = false;
-
-  // 日記エントリを初回のみ初期化
-  useEffect(() => {
-    if (!isInitialized.current) {
-      setDiaryEntries(getAllDiaryEntries());
-      isInitialized.current = true;
-    }
-  }, []);
-
-  // アクティブな日付が変更されたら画像を更新
-  useEffect(() => {
-    updateImage(activeDate.month, activeDate.day);
-  }, [activeDate]);
 
   // スクロールインタラクションの処理
   useEffect(() => {
@@ -70,10 +59,12 @@ function App() {
 
       // 最も近いエントリをアクティブに設定
       if (closestEntry) {
-        setActiveDate({
+        const newActiveDate = {
           month: closestEntry.month,
           day: closestEntry.day,
-        });
+        };
+        setActiveDate(newActiveDate);
+        updateImage(newActiveDate.month, newActiveDate.day);
       }
     };
 
@@ -81,7 +72,7 @@ function App() {
     // 初回実行
     handleScroll();
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [diaryEntries]);
+  }, []);
 
   // 画像を更新（存在しない場合はデフォルトにフォールバック）
   const updateImage = (monthIndex, day) => {
