@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import "./App.css";
+import "./App.scss";
 import {
   createCalendarMonth,
   getAllDiaryEntries,
@@ -17,48 +17,156 @@ function App() {
   const containerRef = useRef(null);
   const diaryEntries = getAllDiaryEntries();
   const [isPlaying, setIsPlaying] = useState(true);
-  const animationRef = useRef(null);
+  const timerRef = useRef(null);
+  const currentEntryIndexRef = useRef(0);
+  const isAutoScrollingRef = useRef(false);
+  const scrollDebounceRef = useRef(null);
+  const isTemporarilyPausedRef = useRef(false);
+
+  // 次の日付まで何秒かかるかの設定
+  const secondsPerEntry = 2; // 各日付を2秒間表示
 
   // デバッグ目盛りの表示/非表示
   const showDebugScale = false;
 
-  // 自動スクロール機能
+  // FONTPLUSのフォント読み込み対応
+  useEffect(() => {
+    // DOM構築後にFONTPLUSをリロード
+    if (window.FONTPLUS) {
+      window.FONTPLUS.reload();
+    }
+  }, []); // 初回マウント時のみ実行
+
+  // 各エントリのスクロール位置を計算する関数
+  const calculateEntryScrollPositions = () => {
+    const container = containerRef.current;
+    if (!container) return [];
+
+    const positions = [];
+    const monthSections = container.querySelectorAll(".month-section");
+    const containerHeight = container.clientHeight;
+
+    monthSections.forEach((section, monthIndex) => {
+      const monthEntries = diaryEntries.filter(
+        (entry) => entry.month === monthIndex
+      );
+      if (monthEntries.length === 0) return;
+
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.offsetHeight;
+
+      // 各エントリの位置を計算（セクション内で均等配置）
+      monthEntries.forEach((entry, index) => {
+        const entryPosition =
+          sectionTop + (sectionHeight / monthEntries.length) * (index + 0.5);
+        // ビューポートの中央に来るように調整
+        const scrollPosition = entryPosition - containerHeight / 2;
+        positions.push({
+          month: entry.month,
+          day: entry.day,
+          scrollPosition: Math.max(0, scrollPosition),
+        });
+      });
+    });
+
+    return positions;
+  };
+
+  // 現在のスクロール位置から最も近いエントリのインデックスを取得
+  const findCurrentEntryIndex = (entryPositions) => {
+    const container = containerRef.current;
+    if (!container || entryPositions.length === 0) return 0;
+
+    const currentScroll = container.scrollTop;
+    const containerHeight = container.clientHeight;
+    const viewportCenter = currentScroll + containerHeight / 2;
+
+    let closestIndex = 0;
+    let minDistance = Infinity;
+
+    entryPositions.forEach((entry, index) => {
+      // エントリの実際の画面上での位置を計算
+      const entryViewportPosition = entry.scrollPosition + containerHeight / 2;
+      const distance = Math.abs(entryViewportPosition - viewportCenter);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    return closestIndex;
+  };
+
+  // 自動スクロール機能（時間ベース制御）
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container || diaryEntries.length === 0) return;
 
-    if (isPlaying) {
-      // TODO: フレームレート非依存の実装にする（DOMHighResTimeStampを使用）
-      const pixelsPerFrame = 0.25; // 1フレームあたりのピクセル数
+    // 自動スクロールを開始する関数
+    const startAutoScroll = () => {
+      const entryPositions = calculateEntryScrollPositions();
+      if (entryPositions.length === 0) return;
 
-      const animate = () => {
-        const currentScroll = container.scrollTop;
-        const maxScroll = container.scrollHeight - container.clientHeight;
+      // ユーザースクロールを検知した場合、現在位置から再計算
+      if (!isAutoScrollingRef.current) {
+        currentEntryIndexRef.current = findCurrentEntryIndex(entryPositions);
+      }
 
-        if (currentScroll < maxScroll) {
-          container.scrollTop = currentScroll + pixelsPerFrame;
-          animationRef.current = requestAnimationFrame(animate);
-        } else {
-          // 最下部に到達したら停止
-          setIsPlaying(false);
+      const scrollToNextEntry = () => {
+        // 一時停止中はスキップ
+        if (isTemporarilyPausedRef.current) return;
+
+        if (currentEntryIndexRef.current < entryPositions.length) {
+          const entry = entryPositions[currentEntryIndexRef.current];
+          // 自動スクロール中フラグを立てる
+          isAutoScrollingRef.current = true;
+          // パッと切り替える（スムーズアニメーション無し）
+          container.scrollTop = entry.scrollPosition;
+
+          // 少し遅延してからフラグをリセット（スクロールイベントが完了するまで待つ）
+          setTimeout(() => {
+            isAutoScrollingRef.current = false;
+          }, 100);
+
+          currentEntryIndexRef.current++;
+
+          // 最後のエントリに到達したら停止
+          if (currentEntryIndexRef.current >= entryPositions.length) {
+            setIsPlaying(false);
+            currentEntryIndexRef.current = 0; // リセット
+          }
         }
       };
 
-      animationRef.current = requestAnimationFrame(animate);
+      // 初回は即座に実行
+      scrollToNextEntry();
+
+      // その後は指定秒数ごとに実行
+      if (currentEntryIndexRef.current < entryPositions.length) {
+        timerRef.current = setInterval(
+          scrollToNextEntry,
+          secondsPerEntry * 1000
+        );
+      }
+    };
+
+    if (isPlaying && !isTemporarilyPausedRef.current) {
+      startAutoScroll();
     } else {
-      // 再生停止時はアニメーションをキャンセル
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
+      // 再生停止時はタイマーをクリア
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     }
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, diaryEntries.length]);
 
   // スクロールインタラクションの処理
   useEffect(() => {
@@ -66,6 +174,68 @@ function App() {
     if (!container || diaryEntries.length === 0) return;
 
     const handleScroll = () => {
+      // ユーザーによる手動スクロールを検知
+      if (!isAutoScrollingRef.current && isPlaying) {
+        // 一時停止フラグを立てる
+        isTemporarilyPausedRef.current = true;
+
+        // タイマーをクリア
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+
+        // スクロール終了を検知するためのdebounce処理
+        if (scrollDebounceRef.current) {
+          clearTimeout(scrollDebounceRef.current);
+        }
+
+        scrollDebounceRef.current = setTimeout(() => {
+          // スクロールが終了したら再開
+          if (isPlaying && isTemporarilyPausedRef.current) {
+            isTemporarilyPausedRef.current = false;
+
+            // 現在位置から再計算して再開
+            const entryPositions = calculateEntryScrollPositions();
+            currentEntryIndexRef.current =
+              findCurrentEntryIndex(entryPositions);
+
+            // 次のエントリへ移動する関数
+            const scrollToNextEntry = () => {
+              if (isTemporarilyPausedRef.current) return;
+
+              if (currentEntryIndexRef.current < entryPositions.length) {
+                const entry = entryPositions[currentEntryIndexRef.current];
+                isAutoScrollingRef.current = true;
+                container.scrollTop = entry.scrollPosition;
+
+                setTimeout(() => {
+                  isAutoScrollingRef.current = false;
+                }, 100);
+
+                currentEntryIndexRef.current++;
+
+                if (currentEntryIndexRef.current >= entryPositions.length) {
+                  setIsPlaying(false);
+                  currentEntryIndexRef.current = 0;
+                }
+              }
+            };
+
+            // 次のエントリへ即座に移動
+            scrollToNextEntry();
+
+            // タイマーを再設定
+            if (currentEntryIndexRef.current < entryPositions.length) {
+              timerRef.current = setInterval(
+                scrollToNextEntry,
+                secondsPerEntry * 1000
+              );
+            }
+          }
+        }, 500); // スクロール終了後500ms待つ
+      }
+
       const scrollTop = container.scrollTop;
       const monthSections = container.querySelectorAll(".month-section");
       const containerHeight = container.clientHeight;
@@ -111,8 +281,13 @@ function App() {
     container.addEventListener("scroll", handleScroll);
     // 初回実行
     handleScroll();
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      if (scrollDebounceRef.current) {
+        clearTimeout(scrollDebounceRef.current);
+      }
+    };
+  }, [isPlaying, secondsPerEntry]);
 
   // 画像を更新（存在しない場合はデフォルトにフォールバック）
   const updateImage = (monthIndex, day) => {
