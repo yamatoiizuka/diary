@@ -3,19 +3,18 @@ import "./App.scss";
 import {
   createCalendarMonth,
   getAllDiaryEntries,
-  getImagePath,
+  getAvailableMonths,
   getDefaultImagePath,
 } from "./utils/calendar";
 import DebugScale from "./components/DebugScale";
 
 function App() {
-  const initialDate = { month: 0, day: 3 };
-  const [activeDate, setActiveDate] = useState(initialDate);
-  const [currentImage, setCurrentImage] = useState(
-    getImagePath(initialDate.month, initialDate.day)
-  );
-  const containerRef = useRef(null);
   const diaryEntries = getAllDiaryEntries();
+  const firstEntry = diaryEntries[0] || { date: "2025-01-03", image: "", text: "" };
+  const [activeEntry, setActiveEntry] = useState(firstEntry);
+  const [currentImage, setCurrentImage] = useState(firstEntry.image || getDefaultImagePath());
+  const [currentTweet, setCurrentTweet] = useState(firstEntry.text || "");
+  const containerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const timerRef = useRef(null);
   const currentEntryIndexRef = useRef(0);
@@ -269,12 +268,9 @@ function App() {
 
       // 最も近いエントリをアクティブに設定
       if (closestEntry) {
-        const newActiveDate = {
-          month: closestEntry.month,
-          day: closestEntry.day,
-        };
-        setActiveDate(newActiveDate);
-        updateImage(newActiveDate.month, newActiveDate.day);
+        setActiveEntry(closestEntry);
+        updateImage(closestEntry);
+        setCurrentTweet(closestEntry.text || "");
       }
     };
 
@@ -290,30 +286,36 @@ function App() {
   }, [isPlaying, secondsPerEntry]);
 
   // 画像を更新（存在しない場合はデフォルトにフォールバック）
-  const updateImage = (monthIndex, day) => {
-    const imagePath = getImagePath(monthIndex, day);
+  const updateImage = (entry) => {
+    if (!entry || !entry.image) {
+      setCurrentImage(getDefaultImagePath());
+      return;
+    }
 
     const testImage = new Image();
     testImage.onload = () => {
-      setCurrentImage(imagePath);
+      setCurrentImage(entry.image);
     };
     testImage.onerror = () => {
       setCurrentImage(getDefaultImagePath());
     };
-    testImage.src = imagePath;
+    testImage.src = entry.image;
   };
 
-  // カレンダーの月を生成
-  const months = [
-    createCalendarMonth(2025, 0),
-    createCalendarMonth(2025, 1),
-    createCalendarMonth(2025, 2),
-  ];
+  // データが存在する月のみカレンダーを生成
+  const availableMonths = getAvailableMonths();
+  const months = availableMonths.map(({ year, month }) =>
+    createCalendarMonth(year, month)
+  );
 
   return (
     <div className="container">
       <div className="image-container">
         <img src={currentImage} alt="Diary Image" className="header-image" />
+      </div>
+
+      <div className="text-container">
+        <p dangerouslySetInnerHTML={{ __html: currentTweet.replace(/\n/g, '<br />') }} />
       </div>
 
       <main className="calendar-container" ref={containerRef}>
@@ -325,9 +327,9 @@ function App() {
 
           // 現在表示中の日のインデックスを取得
           const currentDayIndex =
-            activeDate.month === monthIndex
+            activeEntry && activeEntry.month === month.month
               ? monthDiaryEntries.findIndex(
-                  (entry) => entry.day === activeDate.day
+                  (entry) => entry.day === activeEntry.day
                 )
               : -1;
 
@@ -342,11 +344,16 @@ function App() {
                 {month.days.map((day) => (
                   <div
                     key={day.key}
-                    className={`calendar-day ${day.empty ? "other-month" : ""} ${day.hasDiary ? "has-diary" : ""} ${day.hasDiary && activeDate.month === day.month && activeDate.day === day.day ? "active" : ""}`}
+                    className={`calendar-day ${day.empty ? "other-month" : ""} ${day.hasDiary ? "has-diary" : ""} ${day.hasDiary && activeEntry && activeEntry.date === day.date ? "active" : ""}`}
                     data-day={day.day}
                   >
-                    {!day.empty && (
-                      <span className="day-number">{day.day}</span>
+                    {!day.empty && day.hasDiary && (
+                      <>
+                        <span className="day-circle"></span>
+                        {activeEntry && activeEntry.date === day.date && (
+                          <span className="day-number">{day.day}</span>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

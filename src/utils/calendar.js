@@ -1,19 +1,35 @@
-// 日記がある日付の定義
-export const diaryDays = {
-  0: [3, 5, 8, 11, 12, 14, 17, 18, 19, 20, 24, 25, 26, 28, 29, 31], // 1月
-  1: [1, 2, 6, 9, 10, 12, 13, 15, 16, 21, 22, 23, 25, 26, 27, 28], // 2月
-  2: Array.from({length: 31}, (_, i) => i + 1) // 3月（すべて日記あり）
-}
+import diaryData from '../data/diary-entries.json'
 
 export const monthNames = [
   'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
   'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
 ]
 
-export const monthNamesShort = [
-  'jan', 'feb', 'mar', 'apr', 'may', 'jun', 
-  'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
-]
+// 日記データから月のリストを取得
+export const getAvailableMonths = () => {
+  const monthsSet = new Set()
+  diaryData.forEach(entry => {
+    const date = new Date(entry.date)
+    const yearMonth = `${date.getFullYear()}-${date.getMonth()}`
+    monthsSet.add(yearMonth)
+  })
+
+  return Array.from(monthsSet).map(yearMonth => {
+    const [year, month] = yearMonth.split('-').map(Number)
+    return { year, month }
+  }).sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year
+    return a.month - b.month
+  })
+}
+
+// 特定の月の日記エントリを取得
+export const getEntriesForMonth = (year, month) => {
+  return diaryData.filter(entry => {
+    const date = new Date(entry.date)
+    return date.getFullYear() === year && date.getMonth() === month
+  })
+}
 
 // 月の日数を取得
 export const getDaysInMonth = (year, month) => {
@@ -30,23 +46,29 @@ export const createCalendarMonth = (year, month) => {
   const daysInMonth = getDaysInMonth(year, month)
   const firstDay = getFirstDayOfMonth(year, month)
   const days = []
+  const monthEntries = getEntriesForMonth(year, month)
 
   // 月の開始前の空セル
   for (let i = 0; i < firstDay; i++) {
-    days.push({ 
-      key: `empty-before-${month}-${i}`, 
-      empty: true 
+    days.push({
+      key: `empty-before-${month}-${i}`,
+      empty: true
     })
   }
 
   // 月の日付
   for (let day = 1; day <= daysInMonth; day++) {
-    const hasDiary = diaryDays[month] && diaryDays[month].includes(day)
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const entry = monthEntries.find(e => e.date === dateStr)
+
     days.push({
       key: `day-${month}-${day}`,
       day,
       month,
-      hasDiary
+      year,
+      date: dateStr,
+      hasDiary: !!entry,
+      entry: entry || null
     })
   }
 
@@ -55,36 +77,38 @@ export const createCalendarMonth = (year, month) => {
   const totalRows = Math.ceil(totalCells / 7)
   const cellsNeeded = totalRows * 7
   const remainingCells = cellsNeeded - totalCells
-  
+
   for (let i = 0; i < remainingCells; i++) {
-    days.push({ 
-      key: `empty-after-${month}-${i}`, 
-      empty: true 
+    days.push({
+      key: `empty-after-${month}-${i}`,
+      empty: true
     })
   }
 
   return {
     name: `${monthNames[month]}, ${year}`,
     days,
-    month
+    month,
+    year
   }
 }
 
 // すべての日記エントリを取得
 export const getAllDiaryEntries = () => {
-  const entries = []
-  Object.keys(diaryDays).forEach(monthKey => {
-    const month = parseInt(monthKey)
-    diaryDays[month].forEach(day => {
-      entries.push({ month, day })
-    })
+  return diaryData.map(entry => {
+    const date = new Date(entry.date)
+    return {
+      ...entry,
+      month: date.getMonth(),
+      day: date.getDate(),
+      year: date.getFullYear()
+    }
   })
-  return entries
 }
 
-// 日付に対応する画像パスを取得
-export const getImagePath = (month, day) => {
-  return `/src/image/${day}-${monthNamesShort[month]}.jpeg`
+// 日付に対応するエントリを取得
+export const getEntryForDate = (dateStr) => {
+  return diaryData.find(entry => entry.date === dateStr)
 }
 
 // デフォルト画像パスを取得
