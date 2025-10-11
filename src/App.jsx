@@ -251,6 +251,7 @@ function App() {
         })}
       </main>
 
+      {/* Web フォント読み込みのため CSS で表示を切り替え */}
       <nav className="navigation">
         <div className="nav-item" onClick={() => setIsPlaying(!isPlaying)}>
           <span style={{ display: isPlaying ? "inline" : "none" }}>
