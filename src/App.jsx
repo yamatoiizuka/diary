@@ -262,7 +262,7 @@ function App() {
           {isPlaying ? "一時停止" : "プレイ"}
         </div>
         <div className="nav-item" onClick={() => setShowText(!showText)}>
-          {showText ? "テキスト非表示" : "テキスト表示"}
+          {showText ? "画像のみ表示" : "テキスト表示"}
         </div>
       </nav>
     </div>
