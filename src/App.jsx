@@ -10,6 +10,7 @@ import {
   calculateScrollPositionToCenterEntry,
 } from "./utils/scrollHelpers";
 import DebugScale from "./components/DebugScale";
+import AllTextPreloader from "./components/AllTextPreloader";
 import useImagePreloader from "./hooks/useImagePreloader";
 import Typesetter from "palt-typesetting";
 import "palt-typesetting/dist/typesetter.css";
@@ -26,8 +27,8 @@ function App() {
   const containerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showText, setShowText] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(diaryEntries.length - 1);
   const timerRef = useRef(null);
-  const currentIndexRef = useRef(diaryEntries.length - 1);
 
   // 次の日付まで何秒かかるかの設定
   const secondsPerEntry = 2; // 各日付を2秒間表示
@@ -36,7 +37,7 @@ function App() {
   const showDebugScale = false;
 
   // 画像のプリロード（次の3枚を先読み）
-  useImagePreloader(diaryEntries, currentIndexRef.current, isPlaying, 3);
+  useImagePreloader(diaryEntries, currentIndex, isPlaying, 3);
 
   // 初回マウント時のみ実行
   useEffect(() => {
@@ -44,6 +45,7 @@ function App() {
     if (window.FONTPLUS) {
       window.FONTPLUS.reload();
     }
+
     // 初回マウント時に最新エントリ（最下部）までスクロール
     if (firstEntry && containerRef.current) {
       scrollToEntry(firstEntry);
@@ -95,14 +97,14 @@ function App() {
     }
 
     const scrollToNext = () => {
-      currentIndexRef.current--;
-      if (currentIndexRef.current < 0) {
+      const nextIndex = currentIndex - 1;
+      if (nextIndex < 0) {
         // 最上部に到達しても再生状態は維持（動きは停止）
-        currentIndexRef.current = 0;
         return;
       }
 
-      const entry = diaryEntries[currentIndexRef.current];
+      setCurrentIndex(nextIndex);
+      const entry = diaryEntries[nextIndex];
       scrollToEntry(entry);
       setActiveEntry(entry);
     };
@@ -116,7 +118,7 @@ function App() {
         timerRef.current = null;
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, currentIndex]);
 
   // 手動スクロール時の処理
   useEffect(() => {
@@ -162,7 +164,7 @@ function App() {
 
       if (closestEntry) {
         setActiveEntry(closestEntry);
-        currentIndexRef.current = closestIndex;
+        setCurrentIndex(closestIndex);
       }
     };
 
@@ -182,27 +184,29 @@ function App() {
 
   return (
     <div className="container">
-      {activeEntry.image && (
-        <div className="image-container">
-          <img
-            src={activeEntry.image}
-            alt="Diary Image"
-            className="header-image"
-          />
-        </div>
-      )}
+      <div className="content-container">
+        {activeEntry.image && (
+          <div className="image-container">
+            <img
+              src={activeEntry.image}
+              alt="Diary Image"
+              className="header-image"
+            />
+          </div>
+        )}
 
-      {showText && activeEntry.text && (
-        <div className="text-container">
-          <p
-            dangerouslySetInnerHTML={{
-              __html: typesetter.render(
-                activeEntry.text.replace(/\n/g, "<br />")
-              ),
-            }}
-          />
-        </div>
-      )}
+        {showText && activeEntry.text && (
+          <div className="text-container">
+            <p
+              dangerouslySetInnerHTML={{
+                __html: typesetter.render(
+                  activeEntry.text.replace(/\n/g, "<br />")
+                ),
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       <main className="calendar-container" ref={containerRef}>
         {months.map((month, monthIndex) => {
@@ -259,12 +263,28 @@ function App() {
 
       <nav className="navigation">
         <div className="nav-item" onClick={() => setIsPlaying(!isPlaying)}>
-          {isPlaying ? "一時停止" : "プレイ"}
+          <span style={{ display: isPlaying ? "inline" : "none" }}>
+            一時停止
+          </span>
+          <span style={{ display: !isPlaying ? "inline" : "none" }}>
+            プレイ
+          </span>
         </div>
+
         <div className="nav-item" onClick={() => setShowText(!showText)}>
-          {showText ? "画像のみ表示" : "テキスト表示"}
+          <span style={{ display: showText ? "inline" : "none" }}>
+            画像のみ表示
+          </span>
+          <span style={{ display: !showText ? "inline" : "none" }}>
+            テキスト表示
+          </span>
         </div>
+
+        <div className="nav-item">何</div>
       </nav>
+
+      {/* 全テキストコンテンツの事前レンダリング（非表示） */}
+      <AllTextPreloader entries={diaryEntries} />
     </div>
   );
 }
