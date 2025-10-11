@@ -64,10 +64,12 @@ a {
       p {
         font-size: 21px;
         line-height: 2;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.17em;
         font-feature-settings: "palt" 1;
         font-family: CezannePro-M, sans-serif;
         word-break: auto-phrase;
+        transform-origin: left top;
+        transform: scaleX(0.98);
       }
     }
   }
