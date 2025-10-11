@@ -11,8 +11,11 @@ import {
 } from "./utils/scrollHelpers";
 import DebugScale from "./components/DebugScale";
 import useImagePreloader from "./hooks/useImagePreloader";
+import Typesetter from "palt-typesetting";
+import "palt-typesetting/dist/typesetter.css";
 
 function App() {
+  const typesetter = new Typesetter();
   const diaryEntries = getAllDiaryEntries();
   const firstEntry = diaryEntries[diaryEntries.length - 1] || {
     date: "2025-01-03",
@@ -24,7 +27,6 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showText, setShowText] = useState(true);
   const timerRef = useRef(null);
-  const isAutoScrollingRef = useRef(false);
   const currentIndexRef = useRef(diaryEntries.length - 1);
 
   // 次の日付まで何秒かかるかの設定
@@ -44,13 +46,7 @@ function App() {
     }
     // 初回マウント時に最新エントリ（最下部）までスクロール
     if (firstEntry && containerRef.current) {
-      // 初回スクロールを自動スクロールとして扱う
-      isAutoScrollingRef.current = true;
       scrollToEntry(firstEntry);
-      // 少し待ってからフラグを解除
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 200);
     }
   }, []);
 
@@ -101,19 +97,14 @@ function App() {
     const scrollToNext = () => {
       currentIndexRef.current--;
       if (currentIndexRef.current < 0) {
-        setIsPlaying(false);
-        currentIndexRef.current = diaryEntries.length - 1;
+        // 最上部に到達しても再生状態は維持（動きは停止）
+        currentIndexRef.current = 0;
         return;
       }
 
       const entry = diaryEntries[currentIndexRef.current];
-      isAutoScrollingRef.current = true;
       scrollToEntry(entry);
       setActiveEntry(entry);
-
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 100);
     };
 
     // タイマー設定
@@ -133,10 +124,6 @@ function App() {
     if (!container || diaryEntries.length === 0) return;
 
     const handleScroll = () => {
-      // 自動スクロール中はスキップ
-      if (isAutoScrollingRef.current) return;
-
-      // プレイ中でも手動スクロールを許可（再生状態は維持）
       // スクロール位置から現在のエントリを特定
       const scrollTop = container.scrollTop;
       const viewportCenter = scrollTop + container.clientHeight / 2;
@@ -209,7 +196,9 @@ function App() {
         <div className="text-container">
           <p
             dangerouslySetInnerHTML={{
-              __html: activeEntry.text.replace(/\n/g, "<br />"),
+              __html: typesetter.render(
+                activeEntry.text.replace(/\n/g, "<br />")
+              ),
             }}
           />
         </div>
@@ -273,7 +262,7 @@ function App() {
           {isPlaying ? "一時停止" : "プレイ"}
         </div>
         <div className="nav-item" onClick={() => setShowText(!showText)}>
-          {showText ? "文字非表示" : "文字表示"}
+          {showText ? "テキスト非表示" : "テキスト表示"}
         </div>
       </nav>
     </div>
