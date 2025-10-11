@@ -9,8 +9,8 @@ import {
   calculateEntryPositionInSection,
   calculateScrollPositionToCenterEntry,
 } from "./utils/scrollHelpers";
-import DebugScale from "./components/DebugScale";
 import AllTextPreloader from "./components/AllTextPreloader";
+import AboutModal from "./components/AboutModal";
 import useImagePreloader from "./hooks/useImagePreloader";
 import Typesetter from "palt-typesetting";
 import "palt-typesetting/dist/typesetter.css";
@@ -28,13 +28,11 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showText, setShowText] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(diaryEntries.length - 1);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const timerRef = useRef(null);
 
   // 次の日付まで何秒かかるかの設定
   const secondsPerEntry = 2; // 各日付を2秒間表示
-
-  // デバッグ目盛りの表示/非表示
-  const showDebugScale = false;
 
   // 画像のプリロード（次の3枚を先読み）
   useImagePreloader(diaryEntries, currentIndex, isPlaying, 3);
@@ -248,14 +246,6 @@ function App() {
                   </div>
                 ))}
               </div>
-
-              {/* デバッグ用の目盛り */}
-              {showDebugScale && (
-                <DebugScale
-                  entries={monthDiaryEntries}
-                  currentDayIndex={currentDayIndex}
-                />
-              )}
             </div>
           );
         })}
@@ -280,8 +270,13 @@ function App() {
           </span>
         </div>
 
-        <div className="nav-item">何</div>
+        <div className="nav-item" onClick={() => setIsAboutOpen(true)}>
+          何
+        </div>
       </nav>
+
+      {/* Aboutモーダル */}
+      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
 
       {/* 全テキストコンテンツの事前レンダリング（非表示） */}
       <AllTextPreloader entries={diaryEntries} />
