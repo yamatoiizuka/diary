@@ -91,6 +91,7 @@ body {
   }
 
   .month-section {
+    transform: translateY(20vh);
     padding: 45px 0;
     position: relative;
 
@@ -193,7 +194,6 @@ body {
   left: 50%;
   transform: translateX(-50%);
   width: 390px;
-  // height: 72px;
   background-color: #ffffff;
   display: flex;
   align-items: center;
