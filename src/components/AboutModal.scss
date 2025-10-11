@@ -16,6 +16,21 @@
     pointer-events: auto;
   }
 
+  .content-container {
+    height: 100%;
+    overflow-y: scroll;
+    z-index: 1 !important;
+    overscroll-behavior: none;
+    padding-bottom: 80px;
+
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
   .about-navigation {
     justify-content: flex-end;
   }

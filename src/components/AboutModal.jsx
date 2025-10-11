@@ -1,7 +1,11 @@
 import React from "react";
+import Typesetter from "palt-typesetting";
 import "./AboutModal.scss";
 
 const AboutModal = ({ isOpen, onClose }) => {
+  const typesetter = new Typesetter({
+    kerningRules: [{ between: ["す", "。"], value: -140 }],
+  });
   return (
     <div className={`about-modal ${isOpen ? "open" : ""}`}>
       <div className="content-container">
@@ -16,12 +20,23 @@ const AboutModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="text-container">
-          <p>
-            <a target="_blank" href="https://yamatoiizuka.com">
-              飯塚大和↑
-            </a>
-            の日記です
-          </p>
+          <p
+            dangerouslySetInnerHTML={{
+              __html: typesetter.render(`
+                <a target="_blank" href="https://yamatoiizuka.com">
+                  飯塚大和↑
+                </a>
+                の日記です。
+                <br />
+                <br />
+                誕生日は5月4日、結婚記念日は8月20日です。このあたりはよく美味しいものを食べています。
+                <br />
+                <br />
+                GitHubで<a target="_blank" href="https://github.com/yamatoiizuka/yi-diary">ソースコード</a>を公開しています。
+                文字組に<a target="_blank" href="https://palt.typesetting.jp/">palt-typesetting</a>を使っています。
+              `),
+            }}
+          />
         </div>
       </div>
 
