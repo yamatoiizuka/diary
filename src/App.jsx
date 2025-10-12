@@ -32,7 +32,7 @@ function App() {
   const timerRef = useRef(null);
 
   // 次の日付まで何秒かかるかの設定
-  const secondsPerEntry = 2; // 各日付を2秒間表示
+  const secondsPerEntry = 2;
 
   // 画像のプリロード（次の3枚を先読み）
   useImagePreloader(diaryEntries, currentIndex, isPlaying, 3);
