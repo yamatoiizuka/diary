@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "date": "2025-01-01",
+    "text": "Hello, world!",
+    "image": "/images/2025-01-01.jpeg"
+  }
+]
