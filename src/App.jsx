@@ -208,19 +208,6 @@ function App() {
 
       <main className="calendar-container" ref={containerRef}>
         {months.map((month, monthIndex) => {
-          // 該当月の写真のある日をフィルタリング
-          const monthDiaryEntries = diaryEntries.filter(
-            (entry) => entry.month === month.month
-          );
-
-          // 現在表示中の日のインデックスを取得
-          const currentDayIndex =
-            activeEntry && activeEntry.month === month.month
-              ? monthDiaryEntries.findIndex(
-                  (entry) => entry.day === activeEntry.day
-                )
-              : -1;
-
           return (
             <div
               key={monthIndex}

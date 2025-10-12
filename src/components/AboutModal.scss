@@ -22,6 +22,7 @@
     z-index: 1 !important;
     overscroll-behavior: none;
     padding-bottom: 80px;
+    position: relative;
 
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -33,5 +34,14 @@
 
   .about-navigation {
     justify-content: flex-end;
+  }
+
+  .calendar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 420px;
+    padding: 30px 20px;
   }
 }

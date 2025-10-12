@@ -1,11 +1,20 @@
 import React from "react";
 import Typesetter from "palt-typesetting";
+import { createCalendarMonth } from "../utils/calendar";
 import "./AboutModal.scss";
 
 const AboutModal = ({ isOpen, onClose }) => {
   const typesetter = new Typesetter({
-    kerningRules: [{ between: ["す", "。"], value: -140 }],
+    kerningRules: [
+      { between: ["す", "。"], value: -120 },
+      { between: ["2", "0"], value: 100 },
+      { between: ["日", "、"], value: -120 },
+    ],
   });
+
+  // 2025年9月のカレンダーを生成（month: 8 = September）
+  const septemberCalendar = createCalendarMonth(2025, 8);
+
   return (
     <div className={`about-modal ${isOpen ? "open" : ""}`}>
       <div className="content-container">
@@ -37,6 +46,27 @@ const AboutModal = ({ isOpen, onClose }) => {
               `),
             }}
           />
+        </div>
+
+        <div className="calendar-container calendar-overlay">
+          <div className="month-section">
+            <h2 className="month-title">{septemberCalendar.name}</h2>
+            <div className="calendar-grid">
+              {septemberCalendar.days.map((day) => (
+                <div
+                  key={day.key}
+                  className={`calendar-day ${day.empty ? "other-month" : ""} ${!day.empty && day.day === 9 ? "active" : ""}`}
+                >
+                  {!day.empty && day.day === 9 && (
+                    <>
+                      <span className="day-circle"></span>
+                      <span className="day-number">{day.day}</span>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
