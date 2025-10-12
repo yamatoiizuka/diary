@@ -47,25 +47,25 @@ const AboutModal = ({ isOpen, onClose }) => {
             }}
           />
         </div>
+      </div>
 
-        <div className="calendar-container calendar-overlay">
-          <div className="month-section">
-            <h2 className="month-title">{septemberCalendar.name}</h2>
-            <div className="calendar-grid">
-              {septemberCalendar.days.map((day) => (
-                <div
-                  key={day.key}
-                  className={`calendar-day ${day.empty ? "other-month" : ""} ${!day.empty && day.day === 9 ? "active" : ""}`}
-                >
-                  {!day.empty && day.day === 9 && (
-                    <>
-                      <span className="day-circle"></span>
-                      <span className="day-number">{day.day}</span>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
+      <div className="calendar-container calendar-overlay">
+        <div className="month-section">
+          <h2 className="month-title">{septemberCalendar.name}</h2>
+          <div className="calendar-grid">
+            {septemberCalendar.days.map((day) => (
+              <div
+                key={day.key}
+                className={`calendar-day ${day.empty ? "other-month" : ""} ${!day.empty && day.day === 9 ? "active" : ""}`}
+              >
+                {!day.empty && day.day === 9 && (
+                  <>
+                    <span className="day-circle"></span>
+                    <span className="day-number">{day.day}</span>
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </div>
