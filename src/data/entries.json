@@ -1,5 +1,5 @@
-[
-  { "date": "2025-10-15", "text": "ko", "image": "/images/2025-10-15.jpg" },
-  { "date": "2025-10-25", "text": "hello", "image": "/images/2025-10-25.jpg" },
-  { "date": "2025-10-13", "text": "hello", "image": "/images/2025-10-13.jpg" }
-]
+[{ "date": "2025-10-13", "text": "そうかな
+
+いいと思うけれど", "image": "/images/2025-10-13.jpg"}, {"date":"2025-10-15","text":"ko","image":"/images/2025-10-15.jpg"}
+{"date":"2025-10-25","text":"hello","image":"/images/2025-10-25.jpg"}
+{"date":"2025-10-13","text":"hello","image":"/images/2025-10-13.jpg"}]
