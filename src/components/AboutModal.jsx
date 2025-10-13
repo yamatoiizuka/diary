@@ -41,7 +41,6 @@ const AboutModal = ({ isOpen, onClose }) => {
                 誕生日は5月4日、結婚記念日は8月20日です。このあたりはよく美味しいものを食べています。
                 <br />
                 <br />
-                GitHubで<a target="_blank" href="https://github.com/yamatoiizuka/yi-diary">ソースコード</a>を公開しています。
                 文字組に<a target="_blank" href="https://palt.typesetting.jp/">palt-typesetting</a>を使っています。
               `),
             }}

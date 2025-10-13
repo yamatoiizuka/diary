@@ -135,16 +135,22 @@ export const createCalendarMonth = (year, month) => {
 
 /**
  * すべての日記エントリを取得し、年月日の情報を追加する
- * @returns {Array<Object>} 年月日情報が追加された日記エントリの配列
+ * 日付順（昇順）でソートされる
+ * @returns {Array<Object>} 年月日情報が追加された日記エントリの配列（日付昇順）
  */
 export const getAllDiaryEntries = () => {
-  return diaryData.map((entry) => {
-    const date = new Date(entry.date);
-    return {
-      ...entry,
-      month: date.getMonth(),
-      day: date.getDate(),
-      year: date.getFullYear(),
-    };
-  });
+  return diaryData
+    .map((entry) => {
+      const date = new Date(entry.date);
+      return {
+        ...entry,
+        month: date.getMonth(),
+        day: date.getDate(),
+        year: date.getFullYear(),
+      };
+    })
+    .sort((a, b) => {
+      // 日付文字列で比較（YYYY-MM-DD形式なので文字列比較で大丈夫）
+      return a.date.localeCompare(b.date);
+    });
 };
