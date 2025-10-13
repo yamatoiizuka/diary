@@ -188,6 +188,8 @@ function App() {
               src={`/images/${activeEntry.date}.webp`}
               alt={activeEntry.date}
               className="header-image"
+              width={2000}
+              height={1500}
             />
           </div>
         )}
