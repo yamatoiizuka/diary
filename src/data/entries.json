@@ -1,5 +1,6 @@
 [
-  { "date": "2025-10-12", "text": "hi", "image": "/images/2025-10-12.jpg"} 
+  { "date": "2025-10-15", "text": "hi", "image": "/images/2025-10-15.jpg"} 
+, {"date":"2025-10-12","text":"hi","image":"/images/2025-10-12.jpg"}
 , {"date":"2025-10-13","text":"hi","image":"/images/2025-10-13.jpg"}
 , {"date":"2025-10-14","text":"","image":"/images/2025-10-14.jpg"}
   ]
