@@ -185,7 +185,7 @@ function App() {
         {activeEntry.date && (
           <div className="image-container">
             <img
-              src={`/images/${activeEntry.date}.jpg`}
+              src={`/images/${activeEntry.date}.webp`}
               alt={activeEntry.date}
               className="header-image"
             />
