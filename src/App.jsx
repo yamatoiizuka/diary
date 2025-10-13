@@ -33,8 +33,8 @@ function App() {
   // 次の日付まで何秒かかるかの設定
   const secondsPerEntry = 2;
 
-  // 画像のプリロード（次の3枚を先読み）
-  useImagePreloader(diaryEntries, currentIndex, isPlaying, 3);
+  // 画像のプリロード（最新から順番にバックグラウンドで読み込み）
+  useImagePreloader(diaryEntries, currentIndex);
 
   // 初回マウント時のみ実行
   useEffect(() => {
