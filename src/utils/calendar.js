@@ -1,4 +1,4 @@
-import diaryData from "../data/diary-entries.json";
+import diaryData from "../data/entries.json";
 
 /**
  * 月名の配列（英語大文字）

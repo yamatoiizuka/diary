@@ -20,7 +20,6 @@ function App() {
   const diaryEntries = getAllDiaryEntries();
   const firstEntry = diaryEntries[diaryEntries.length - 1] || {
     date: "2025-01-03",
-    image: "",
     text: "",
   };
   const [activeEntry, setActiveEntry] = useState(firstEntry);
@@ -183,11 +182,11 @@ function App() {
   return (
     <div className="container">
       <div className="content-container">
-        {activeEntry.image && (
+        {activeEntry.date && (
           <div className="image-container">
             <img
-              src={activeEntry.image}
-              alt="Diary Image"
+              src={`/images/${activeEntry.date}.jpg`}
+              alt={activeEntry.date}
               className="header-image"
             />
           </div>
