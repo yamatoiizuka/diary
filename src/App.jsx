@@ -49,6 +49,13 @@ function App() {
     }
   }, []);
 
+  // アクティブなエントリの日付をtitleに設定
+  useEffect(() => {
+    if (activeEntry?.date) {
+      document.title = activeEntry.date;
+    }
+  }, [activeEntry]);
+
   // 特定のエントリまでスクロールする関数
   const scrollToEntry = (entry) => {
     const container = containerRef.current;
