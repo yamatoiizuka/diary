@@ -9,6 +9,12 @@ import {
   calculateEntryPositionInSection,
   calculateScrollPositionToCenterEntry,
 } from "./utils/scrollHelpers";
+import {
+  getIsPlaying,
+  setIsPlaying as saveIsPlaying,
+  getShowText,
+  setShowText as saveShowText,
+} from "./utils/localStorage";
 import AllTextPreloader from "./components/AllTextPreloader";
 import AboutModal from "./components/AboutModal";
 import useImagePreloader from "./hooks/useImagePreloader";
@@ -28,8 +34,8 @@ function App() {
   };
   const [activeEntry, setActiveEntry] = useState(firstEntry);
   const containerRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [showText, setShowText] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(() => getIsPlaying());
+  const [showText, setShowText] = useState(() => getShowText());
   const [currentIndex, setCurrentIndex] = useState(diaryEntries.length - 1);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const timerRef = useRef(null);
@@ -59,6 +65,16 @@ function App() {
       document.title = activeEntry.date;
     }
   }, [activeEntry]);
+
+  // isPlayingの変更をLocalStorageに保存
+  useEffect(() => {
+    saveIsPlaying(isPlaying);
+  }, [isPlaying]);
+
+  // showTextの変更をLocalStorageに保存
+  useEffect(() => {
+    saveShowText(showText);
+  }, [showText]);
 
   // 特定のエントリまでスクロールする関数
   const scrollToEntry = (entry) => {
