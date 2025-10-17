@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
 
+// ビルド時のタイムスタンプを取得（キャッシュバスティング用）
+const BUILD_VERSION =
+  typeof __BUILD_TIMESTAMP__ !== "undefined" ? __BUILD_TIMESTAMP__ : Date.now();
+
 /**
  * 画像のプリロードを管理するカスタムフック
  * 最新の日付から順番に画像を読み込んでいく
@@ -14,8 +18,8 @@ export const useImagePreloader = (entries, currentIndex) => {
   useEffect(() => {
     if (!entries || entries.length === 0) return;
 
-    // 画像URLを生成
-    const getImageUrl = (entry) => `/images/${entry.date}.webp`;
+    // 画像URLを生成（キャッシュバスティング用のクエリパラメータ付き）
+    const getImageUrl = (entry) => `/images/${entry.date}.webp?v=${BUILD_VERSION}`;
 
     // すでにプリロード済みかチェック
     const isPreloaded = (entry) => preloadedImages.current.has(entry.date);

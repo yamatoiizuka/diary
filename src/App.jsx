@@ -15,6 +15,10 @@ import useImagePreloader from "./hooks/useImagePreloader";
 import Typesetter from "palt-typesetting";
 import "palt-typesetting/dist/typesetter.css";
 
+// ビルド時のタイムスタンプを取得（開発時はDate.now()、本番時はビルドタイムスタンプ）
+const BUILD_VERSION =
+  typeof __BUILD_TIMESTAMP__ !== "undefined" ? __BUILD_TIMESTAMP__ : Date.now();
+
 function App() {
   const typesetter = new Typesetter();
   const diaryEntries = getAllDiaryEntries();
@@ -192,7 +196,7 @@ function App() {
         {activeEntry.date && (
           <div className="image-container">
             <img
-              src={`/images/${activeEntry.date}.webp`}
+              src={`/images/${activeEntry.date}.webp?v=${BUILD_VERSION}`}
               alt={activeEntry.date}
               className="header-image"
               width={2000}
