@@ -5,9 +5,12 @@ import {
   getAllDiaryEntries,
   getAvailableMonths,
 } from "./utils/calendar";
+import { scrollToEntry } from "./utils/scrollHelpers";
 import AllTextPreloader from "./components/AllTextPreloader";
 import AboutModal from "./components/AboutModal";
 import useImagePreloader from "./hooks/useImagePreloader";
+import useAutoScroll from "./hooks/useAutoScroll";
+import useScrollDetection from "./hooks/useScrollDetection";
 import Typesetter from "palt-typesetting";
 import "palt-typesetting/dist/typesetter.css";
 
@@ -18,23 +21,37 @@ const BUILD_VERSION =
 function App() {
   const typesetter = new Typesetter();
   const diaryEntries = getAllDiaryEntries();
-  const firstEntry = diaryEntries[diaryEntries.length - 1] || {
-    date: "2025-01-03",
-    text: "",
-  };
+  const firstEntry = diaryEntries[diaryEntries.length - 1] || {};
   const [activeEntry, setActiveEntry] = useState(firstEntry);
-  const containerRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showText, setShowText] = useState(true);
-  const [currentIndex, setCurrentIndex] = useState(diaryEntries.length - 1);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const timerRef = useRef(null);
+  const containerRef = useRef(null);
 
-  // 次の日付まで何秒かかるかの設定
-  const secondsPerEntry = 2;
+  // 現在のインデックスを取得する関数
+  const getCurrentIndex = () => {
+    return diaryEntries.findIndex((e) => e.date === activeEntry.date);
+  };
 
   // 画像のプリロード（最新から順番にバックグラウンドで読み込み）
-  useImagePreloader(diaryEntries, currentIndex);
+  useImagePreloader(diaryEntries, getCurrentIndex());
+
+  // 自動スクロール機能
+  useAutoScroll({
+    isPlaying,
+    diaryEntries,
+    activeEntry,
+    setActiveEntry,
+    containerRef,
+    intervalSeconds: 2,
+  });
+
+  // 手動スクロールの検出
+  useScrollDetection({
+    containerRef,
+    diaryEntries,
+    setActiveEntry,
+  });
 
   // 初回マウント時のみ実行
   useEffect(() => {
@@ -45,7 +62,7 @@ function App() {
 
     // 初回マウント時に最新エントリ（最下部）までスクロール
     if (firstEntry && containerRef.current) {
-      scrollToEntry(firstEntry);
+      scrollToEntry(firstEntry, containerRef.current, diaryEntries);
     }
   }, []);
 
@@ -55,123 +72,6 @@ function App() {
       document.title = activeEntry.date;
     }
   }, [activeEntry]);
-
-  // 特定のエントリまでスクロールする関数
-  const scrollToEntry = (entry) => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const monthSections = container.querySelectorAll(".month-section");
-    for (const section of monthSections) {
-      const monthIndex = parseInt(section.getAttribute("data-month"));
-      if (monthIndex === entry.month) {
-        const monthEntries = diaryEntries.filter((e) => e.month === monthIndex);
-        const entryIndex = monthEntries.findIndex((e) => e.day === entry.day);
-        if (entryIndex !== -1) {
-          const sectionTop = section.offsetTop;
-          const sectionHeight = section.offsetHeight;
-
-          // セクション内でエントリを均等配置した場合の位置を計算
-          // entryIndex + 0.5 は、エントリの中央位置を取得するため
-          const entryPosition =
-            sectionTop + (sectionHeight / monthEntries.length) * (entryIndex + 0.5);
-
-          // エントリをビューポートの中央に配置するため、コンテナの高さの半分を引く
-          const scrollPosition = Math.max(0, entryPosition - container.clientHeight / 2);
-
-          container.scrollTop = scrollPosition;
-          break;
-        }
-      }
-    }
-  };
-
-  // 自動スクロール機能
-  useEffect(() => {
-    if (!isPlaying || diaryEntries.length === 0) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
-
-    const scrollToNext = () => {
-      const nextIndex = currentIndex - 1;
-      if (nextIndex < 0) {
-        // 最上部に到達しても再生状態は維持（動きは停止）
-        return;
-      }
-
-      setCurrentIndex(nextIndex);
-      const entry = diaryEntries[nextIndex];
-      scrollToEntry(entry);
-      setActiveEntry(entry);
-    };
-
-    // タイマー設定
-    timerRef.current = setInterval(scrollToNext, secondsPerEntry * 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [isPlaying, currentIndex]);
-
-  // 手動スクロール時の処理
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || diaryEntries.length === 0) return;
-
-    const handleScroll = () => {
-      // スクロール位置から現在のエントリを特定
-      const scrollTop = container.scrollTop;
-      const viewportCenter = scrollTop + container.clientHeight / 2;
-
-      let closestEntry = null;
-      let closestIndex = 0;
-      let minDistance = Infinity;
-
-      // 各月のセクションをチェック
-      const monthSections = container.querySelectorAll(".month-section");
-      monthSections.forEach((section) => {
-        const monthIndex = parseInt(section.getAttribute("data-month"));
-        const monthEntries = diaryEntries.filter((e) => e.month === monthIndex);
-
-        monthEntries.forEach((entry, idx) => {
-          const entryIndex = diaryEntries.findIndex((e) => e === entry);
-          const sectionTop = section.offsetTop;
-          const sectionHeight = section.offsetHeight;
-
-          // セクション内でエントリを均等配置した場合の位置を計算
-          const entryPosition =
-            sectionTop + (sectionHeight / monthEntries.length) * (idx + 0.5);
-
-          const distance = Math.abs(entryPosition - viewportCenter);
-
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestEntry = entry;
-            closestIndex = entryIndex;
-          }
-        });
-      });
-
-      if (closestEntry) {
-        setActiveEntry(closestEntry);
-        setCurrentIndex(closestIndex);
-      }
-    };
-
-    container.addEventListener("scroll", handleScroll);
-    handleScroll(); // 初回実行
-
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, []); // 依存配列を空にして初回のみイベントリスナーを設定
 
   // データが存在する月のみカレンダーを生成
   const availableMonths = getAvailableMonths();
