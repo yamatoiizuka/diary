@@ -5,16 +5,6 @@ import {
   getAllDiaryEntries,
   getAvailableMonths,
 } from "./utils/calendar";
-import {
-  calculateEntryPositionInSection,
-  calculateScrollPositionToCenterEntry,
-} from "./utils/scrollHelpers";
-import {
-  getIsPlaying,
-  setIsPlaying as saveIsPlaying,
-  getShowText,
-  setShowText as saveShowText,
-} from "./utils/localStorage";
 import AllTextPreloader from "./components/AllTextPreloader";
 import AboutModal from "./components/AboutModal";
 import useImagePreloader from "./hooks/useImagePreloader";
@@ -34,8 +24,8 @@ function App() {
   };
   const [activeEntry, setActiveEntry] = useState(firstEntry);
   const containerRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(() => getIsPlaying());
-  const [showText, setShowText] = useState(() => getShowText());
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [showText, setShowText] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(diaryEntries.length - 1);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const timerRef = useRef(null);
@@ -66,16 +56,6 @@ function App() {
     }
   }, [activeEntry]);
 
-  // isPlayingの変更をLocalStorageに保存
-  useEffect(() => {
-    saveIsPlaying(isPlaying);
-  }, [isPlaying]);
-
-  // showTextの変更をLocalStorageに保存
-  useEffect(() => {
-    saveShowText(showText);
-  }, [showText]);
-
   // 特定のエントリまでスクロールする関数
   const scrollToEntry = (entry) => {
     const container = containerRef.current;
@@ -91,17 +71,13 @@ function App() {
           const sectionTop = section.offsetTop;
           const sectionHeight = section.offsetHeight;
 
-          const entryPosition = calculateEntryPositionInSection(
-            sectionTop,
-            sectionHeight,
-            entryIndex,
-            monthEntries.length
-          );
+          // セクション内でエントリを均等配置した場合の位置を計算
+          // entryIndex + 0.5 は、エントリの中央位置を取得するため
+          const entryPosition =
+            sectionTop + (sectionHeight / monthEntries.length) * (entryIndex + 0.5);
 
-          const scrollPosition = calculateScrollPositionToCenterEntry(
-            entryPosition,
-            container.clientHeight
-          );
+          // エントリをビューポートの中央に配置するため、コンテナの高さの半分を引く
+          const scrollPosition = Math.max(0, entryPosition - container.clientHeight / 2);
 
           container.scrollTop = scrollPosition;
           break;
@@ -169,12 +145,9 @@ function App() {
           const sectionTop = section.offsetTop;
           const sectionHeight = section.offsetHeight;
 
-          const entryPosition = calculateEntryPositionInSection(
-            sectionTop,
-            sectionHeight,
-            idx,
-            monthEntries.length
-          );
+          // セクション内でエントリを均等配置した場合の位置を計算
+          const entryPosition =
+            sectionTop + (sectionHeight / monthEntries.length) * (idx + 0.5);
 
           const distance = Math.abs(entryPosition - viewportCenter);
 
