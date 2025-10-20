@@ -9,8 +9,6 @@ import { scrollToEntry } from "./utils/scrollHelpers";
 import AllTextPreloader from "./components/AllTextPreloader";
 import AboutModal from "./components/AboutModal";
 import useImagePreloader from "./hooks/useImagePreloader";
-import useAutoScroll from "./hooks/useAutoScroll";
-import useScrollDetection from "./hooks/useScrollDetection";
 import Typesetter from "palt-typesetting";
 import "palt-typesetting/dist/typesetter.css";
 
@@ -27,6 +25,7 @@ function App() {
   const [showText, setShowText] = useState(true);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const containerRef = useRef(null);
+  const timerRef = useRef(null);
 
   // 現在のインデックスを取得する関数
   const getCurrentIndex = () => {
@@ -35,23 +34,6 @@ function App() {
 
   // 画像のプリロード（最新から順番にバックグラウンドで読み込み）
   useImagePreloader(diaryEntries, getCurrentIndex());
-
-  // 自動スクロール機能
-  useAutoScroll({
-    isPlaying,
-    diaryEntries,
-    activeEntry,
-    setActiveEntry,
-    containerRef,
-    intervalSeconds: 2,
-  });
-
-  // 手動スクロールの検出
-  useScrollDetection({
-    containerRef,
-    diaryEntries,
-    setActiveEntry,
-  });
 
   // 初回マウント時のみ実行
   useEffect(() => {
@@ -72,6 +54,89 @@ function App() {
       document.title = activeEntry.date;
     }
   }, [activeEntry]);
+
+  // 自動スクロール機能
+  useEffect(() => {
+    if (!isPlaying || diaryEntries.length === 0) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    const scrollToNext = () => {
+      const currentIndex = getCurrentIndex();
+      const nextIndex = currentIndex - 1;
+      if (nextIndex < 0) {
+        // 最上部に到達しても再生状態は維持（動きは停止）
+        return;
+      }
+
+      const entry = diaryEntries[nextIndex];
+      scrollToEntry(entry, containerRef.current, diaryEntries);
+      setActiveEntry(entry);
+    };
+
+    // タイマー設定
+    timerRef.current = setInterval(scrollToNext, 2 * 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isPlaying, activeEntry, diaryEntries]);
+
+  // 手動スクロール時の処理
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || diaryEntries.length === 0) return;
+
+    const handleScroll = () => {
+      // スクロール位置から現在のエントリを特定
+      const scrollTop = container.scrollTop;
+      const viewportCenter = scrollTop + container.clientHeight / 2;
+
+      let closestEntry = null;
+      let minDistance = Infinity;
+
+      // 各月のセクションをチェック
+      const monthSections = container.querySelectorAll(".month-section");
+      monthSections.forEach((section) => {
+        const monthIndex = parseInt(section.getAttribute("data-month"));
+        const monthEntries = diaryEntries.filter((e) => e.month === monthIndex);
+
+        monthEntries.forEach((entry, idx) => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+
+          // セクション内でエントリを均等配置した場合の位置を計算
+          const entryPosition =
+            sectionTop + (sectionHeight / monthEntries.length) * (idx + 0.5);
+
+          const distance = Math.abs(entryPosition - viewportCenter);
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestEntry = entry;
+          }
+        });
+      });
+
+      if (closestEntry) {
+        setActiveEntry(closestEntry);
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    handleScroll(); // 初回実行
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, []); // 依存配列を空にして初回のみイベントリスナーを設定
 
   // データが存在する月のみカレンダーを生成
   const availableMonths = getAvailableMonths();
