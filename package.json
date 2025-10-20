@@ -1,7 +1,7 @@
 {
-  "name": "diary-app",
+  "name": "diary",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,5 +19,9 @@
     "palt-typesetting": "^0.9.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
+  },
+  "author": {
+    "name": "Yamato Iizuka",
+    "email": "me@yamatoiizuka.com"
   }
 }
