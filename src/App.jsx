@@ -128,17 +128,16 @@ function App() {
                     }`}
                     data-day={day.day}
                   >
-                      {!day.empty && day.hasDiary && (
-                        <>
-                          <span className="day-circle"></span>
-                          {activeEntry && activeEntry.date === day.date && (
-                            <span className="day-number">{day.day}</span>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
+                    {!day.empty && day.hasDiary && (
+                      <>
+                        <span className="day-circle"></span>
+                        {activeEntry && activeEntry.date === day.date && (
+                          <span className="day-number">{day.day}</span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           );
