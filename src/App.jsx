@@ -114,49 +114,20 @@ function App() {
             >
               <h2 className="month-title">{month.name}</h2>
               <div className="calendar-grid">
-                {month.days.map((day, dayIndex) => {
-                  // アクティブな日のインデックスを見つける
-                  const activeDayIndex = month.days.findIndex(
-                    (d) => d.date === activeEntry?.date
-                  );
-
-                  // 上下左右の判定
-                  const isAdjacent =
-                    activeDayIndex !== -1 &&
-                    (dayIndex === activeDayIndex - 7 || // 上
-                      dayIndex === activeDayIndex + 7 || // 下
-                      (dayIndex === activeDayIndex - 1 &&
-                        Math.floor(dayIndex / 7) ===
-                          Math.floor(activeDayIndex / 7)) || // 左（同じ行）
-                      (dayIndex === activeDayIndex + 1 &&
-                        Math.floor(dayIndex / 7) ===
-                          Math.floor(activeDayIndex / 7))); // 右（同じ行）
-
-                  // 斜めの判定（行の差が1であることを確認）
-                  const isDiagonal =
-                    activeDayIndex !== -1 &&
-                    Math.abs(
-                      Math.floor(dayIndex / 7) - Math.floor(activeDayIndex / 7)
-                    ) === 1 &&
-                    (dayIndex === activeDayIndex - 8 || // 左上
-                      dayIndex === activeDayIndex - 6 || // 右上
-                      dayIndex === activeDayIndex + 6 || // 左下
-                      dayIndex === activeDayIndex + 8); // 右下
-
-                  return (
-                    <div
-                      key={day.key}
-                      className={`calendar-day ${
-                        day.empty ? "other-month" : ""
-                      } ${day.hasDiary ? "has-diary" : ""} ${
-                        day.hasDiary &&
-                        activeEntry &&
-                        activeEntry.date === day.date
-                          ? "active"
-                          : ""
-                      } ${day.hasDiary && isAdjacent ? "adjacent" : ""} ${day.hasDiary && isDiagonal ? "diagonal" : ""}`}
-                      data-day={day.day}
-                    >
+                {month.days.map((day) => (
+                  <div
+                    key={day.key}
+                    className={`calendar-day ${
+                      day.empty ? "other-month" : ""
+                    } ${day.hasDiary ? "has-diary" : ""} ${
+                      day.hasDiary &&
+                      activeEntry &&
+                      activeEntry.date === day.date
+                        ? "active"
+                        : ""
+                    }`}
+                    data-day={day.day}
+                  >
                       {!day.empty && day.hasDiary && (
                         <>
                           <span className="day-circle"></span>

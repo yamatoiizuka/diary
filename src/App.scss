@@ -1,8 +1,6 @@
 // 色の変数定義
 $color-primary: #ffb67e;
 $diary-dot-size: 3px;
-$diary-adjacent-size: 15px;
-$diary-diagonal-size: 10px;
 
 * {
   margin: 0;
@@ -167,26 +165,6 @@ a {
             height: $diary-dot-size;
             background-color: $color-primary;
             border: none;
-          }
-
-          // アクティブな日の上下左右は変数サイズ（線のみ）
-          &.adjacent {
-            .day-circle {
-              width: $diary-adjacent-size;
-              height: $diary-adjacent-size;
-              background-color: transparent;
-              border: 1px solid $color-primary;
-            }
-          }
-
-          // アクティブな日の斜めは変数サイズ（線のみ）
-          &.diagonal {
-            .day-circle {
-              width: $diary-diagonal-size;
-              height: $diary-diagonal-size;
-              background-color: transparent;
-              border: 1px solid $color-primary;
-            }
           }
 
           // アクティブな日は数字を表示
