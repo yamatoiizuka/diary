@@ -19,13 +19,15 @@ const AboutModal = ({ isOpen, onClose }) => {
     <div className={`about-modal ${isOpen ? "open" : ""}`}>
       <div className="content-container">
         <div className="image-container">
-          <img
-            src="profile.webp"
-            alt="Profile"
-            className="header-image"
-            width={2000}
-            height={1500}
-          />
+          <div className="image-wrapper">
+            <img
+              src="profile.webp"
+              alt="Profile"
+              className="header-image"
+              width={2000}
+              height={1500}
+            />
+          </div>
         </div>
 
         <div className="text-container">
@@ -55,7 +57,9 @@ const AboutModal = ({ isOpen, onClose }) => {
             {septemberCalendar.days.map((day) => (
               <div
                 key={day.key}
-                className={`calendar-day ${day.empty ? "other-month" : ""} ${!day.empty && day.day === 9 ? "active" : ""}`}
+                className={`calendar-day ${day.empty ? "other-month" : ""} ${
+                  !day.empty && day.day === 9 ? "active" : ""
+                }`}
               >
                 {!day.empty && day.day === 9 && (
                   <>
