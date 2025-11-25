@@ -79,13 +79,15 @@ function App() {
       <div className="content-container">
         {activeEntry.date && (
           <div className="image-container">
-            <img
-              src={`/images/${activeEntry.date}.webp?v=${BUILD_VERSION}`}
-              alt={activeEntry.date}
-              className="header-image"
-              width={2000}
-              height={1500}
-            />
+            <div className="image-wrapper">
+              <img
+                src={`/images/${activeEntry.date}.webp?v=${BUILD_VERSION}`}
+                alt={activeEntry.date}
+                className="header-image"
+                width={2000}
+                height={1500}
+              />
+            </div>
           </div>
         )}
 
@@ -115,7 +117,15 @@ function App() {
                 {month.days.map((day) => (
                   <div
                     key={day.key}
-                    className={`calendar-day ${day.empty ? "other-month" : ""} ${day.hasDiary ? "has-diary" : ""} ${day.hasDiary && activeEntry && activeEntry.date === day.date ? "active" : ""}`}
+                    className={`calendar-day ${
+                      day.empty ? "other-month" : ""
+                    } ${day.hasDiary ? "has-diary" : ""} ${
+                      day.hasDiary &&
+                      activeEntry &&
+                      activeEntry.date === day.date
+                        ? "active"
+                        : ""
+                    }`}
                     data-day={day.day}
                   >
                     {!day.empty && day.hasDiary && (
