@@ -5,18 +5,18 @@ import diaryData from "../data/entries.json";
  * @constant {string[]}
  */
 export const monthNames = [
-  "JANUARY",
-  "FEBRUARY",
-  "MARCH",
-  "APRIL",
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
   "MAY",
-  "JUNE",
-  "JULY",
-  "AUGUST",
-  "SEPTEMBER",
-  "OCTOBER",
-  "NOVEMBER",
-  "DECEMBER",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
 ];
 
 /**
@@ -98,7 +98,9 @@ export const createCalendarMonth = (year, month) => {
 
   // 月の日付
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
     const entry = monthEntries.find((e) => e.date === dateStr);
 
     days.push({

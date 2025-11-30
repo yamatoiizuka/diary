@@ -25,6 +25,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showText, setShowText] = useState(true);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const containerRef = useRef(null);
 
   const activeEntry = diaryEntries[currentIndex] || {};
@@ -46,6 +47,7 @@ function App() {
     containerRef,
     diaryEntries,
     setCurrentIndex,
+    setIsScrolling,
   });
 
   // 初回マウント時のみ実行
@@ -74,9 +76,14 @@ function App() {
     createCalendarMonth(year, month)
   );
 
+  // アクティブなエントリの月を取得（activeEntry.monthは0-11なので+1する）
+  const activeMonth = activeEntry.date
+    ? `${activeEntry.year}-${String(activeEntry.month + 1).padStart(2, "0")}`
+    : null;
+
   return (
     <div className="container">
-      <div className="content-container">
+      <div className={`content-container ${isScrolling ? "is-scrolling" : ""}`}>
         {activeEntry.date && (
           <div className="image-container">
             <div className="image-wrapper">
@@ -91,7 +98,7 @@ function App() {
           </div>
         )}
 
-        {showText && activeEntry.text && (
+        {showText && activeEntry.text && !isScrolling && (
           <div className="text-container">
             <p
               dangerouslySetInnerHTML={{
@@ -104,13 +111,16 @@ function App() {
         )}
       </div>
 
-      <main className="calendar-container" ref={containerRef}>
+      <main className={`calendar-container ${isScrolling ? "is-scrolling" : ""}`} ref={containerRef}>
         {months.map((month, monthIndex) => {
+          const monthKey = `${month.year}-${String(month.month + 1).padStart(2, "0")}`;
+          const isActiveMonth = activeMonth === monthKey;
           return (
             <div
               key={monthIndex}
               className="month-section"
               data-month={month.month}
+              style={{ visibility: isScrolling || isActiveMonth ? "visible" : "hidden" }}
             >
               <h2 className="month-title">{month.name}</h2>
               <div className="calendar-grid">
@@ -145,6 +155,7 @@ function App() {
       </main>
 
       {/* Web フォント読み込みのため CSS で表示を切り替え */}
+      {!isScrolling && (
       <nav className="navigation">
         <div className="nav-item" onClick={() => setIsPlaying(!isPlaying)}>
           <span style={{ display: isPlaying ? "inline" : "none" }}>
@@ -168,6 +179,7 @@ function App() {
           何
         </div>
       </nav>
+      )}
 
       {/* Aboutモーダル */}
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
