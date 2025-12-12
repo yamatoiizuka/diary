@@ -27,6 +27,7 @@ function App() {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const containerRef = useRef(null);
+  const isAutoScrollingRef = useRef(false);
 
   const activeEntry = diaryEntries[currentIndex] || {};
 
@@ -40,6 +41,7 @@ function App() {
     diaryEntries,
     setCurrentIndex,
     containerRef,
+    isAutoScrollingRef,
   });
 
   // 手動スクロール検出
@@ -48,6 +50,7 @@ function App() {
     diaryEntries,
     setCurrentIndex,
     setIsScrolling,
+    isAutoScrollingRef,
   });
 
   // 初回マウント時のみ実行

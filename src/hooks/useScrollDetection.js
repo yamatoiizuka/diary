@@ -8,35 +8,61 @@ export const useScrollDetection = ({
   diaryEntries,
   setCurrentIndex,
   setIsScrolling,
+  isAutoScrollingRef,
 }) => {
   const scrollTimeoutRef = useRef(null);
-  const userHasInteractedRef = useRef(false);
-  const isUserScrollingRef = useRef(false);
+  const isTouchEndedRef = useRef(false);
+  const isScrollStoppedRef = useRef(false);
+  const hasUserInteractedRef = useRef(false);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container || diaryEntries.length === 0) return;
 
-    // ユーザーがタッチ/マウス操作を開始したらフラグを立てる
+    // 両方の条件が揃った時のみisScrollingを解除
+    const tryEndScrolling = () => {
+      if (isTouchEndedRef.current && isScrollStoppedRef.current) {
+        setIsScrolling(false);
+        // フラグをリセット
+        isTouchEndedRef.current = false;
+        isScrollStoppedRef.current = false;
+      }
+    };
+
+    // タッチ/マウス操作開始
     const handleInteractionStart = () => {
-      userHasInteractedRef.current = true;
-      isUserScrollingRef.current = true;
+      hasUserInteractedRef.current = true;
+      isTouchEndedRef.current = false;
+      isScrollStoppedRef.current = false;
+    };
+
+    // タッチ/マウス操作終了
+    const handleInteractionEnd = () => {
+      isTouchEndedRef.current = true;
+      tryEndScrolling();
     };
 
     const handleScroll = () => {
-      // ユーザー操作によるスクロール中のみ手動スクロールとして扱う
-      if (setIsScrolling && isUserScrollingRef.current) {
+      // 自動スクロールによるscrollイベントはスキップ
+      if (isAutoScrollingRef.current) {
+        isAutoScrollingRef.current = false;
+        return;
+      }
+
+      // ユーザーがtouchstartした後のみスクロール検出を有効化
+      if (hasUserInteractedRef.current) {
         setIsScrolling(true);
+        isScrollStoppedRef.current = false;
 
         // 既存のタイムアウトをクリア
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
 
-        // スクロール終了を検出（150ms後）- 慣性スクロールも含めてスクロールが止まったら解除
+        // スクロール終了を検出（150ms後）
         scrollTimeoutRef.current = setTimeout(() => {
-          setIsScrolling(false);
-          isUserScrollingRef.current = false;
+          isScrollStoppedRef.current = true;
+          tryEndScrolling();
         }, 150);
       }
       // スクロール位置から現在のエントリを特定
@@ -80,13 +106,13 @@ export const useScrollDetection = ({
     // イベントリスナーを登録
     container.addEventListener("scroll", handleScroll);
     container.addEventListener("touchstart", handleInteractionStart);
-    container.addEventListener("mousedown", handleInteractionStart);
+    container.addEventListener("touchend", handleInteractionEnd);
     handleScroll(); // 初回実行
 
     return () => {
       container.removeEventListener("scroll", handleScroll);
       container.removeEventListener("touchstart", handleInteractionStart);
-      container.removeEventListener("mousedown", handleInteractionStart);
+      container.removeEventListener("touchend", handleInteractionEnd);
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }

@@ -10,6 +10,7 @@ export const useAutoScroll = ({
   diaryEntries,
   setCurrentIndex,
   containerRef,
+  isAutoScrollingRef,
 }) => {
   const timerRef = useRef(null);
 
@@ -30,6 +31,8 @@ export const useAutoScroll = ({
       }
 
       const entry = diaryEntries[nextIndex];
+      // 自動スクロール開始フラグを立てる
+      isAutoScrollingRef.current = true;
       scrollToEntry(entry, containerRef.current, diaryEntries);
       setCurrentIndex(nextIndex);
     };
