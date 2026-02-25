@@ -12,10 +12,10 @@ permissions:
   pages: write
   id-token: write
 
-# 同時実行を制限（複数のデプロイが同時に走らないように）
+# 新しいpushが来たら古いランをキャンセルし、最新のみ実行
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # WebP変換ジョブ
@@ -27,6 +27,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -60,6 +61,7 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add public/images/*.webp
           git commit -m "🖼️ Auto-convert images to WebP [skip ci]"
+          git pull --rebase
           git push
 
   # ビルド＆デプロイジョブ
