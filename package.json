@@ -4,10 +4,12 @@
   "version": "1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "prepare-images": "node scripts/convert-to-webp.js",
+    "dev": "npm run prepare-images && vite",
+    "build": "npm run prepare-images && npm run build:app",
+    "build:app": "vite build",
     "preview": "vite preview",
-    "convert-webp": "node scripts/convert-to-webp.js"
+    "convert-webp": "npm run prepare-images"
   },
   "devDependencies": {
     "sass-embedded": "^1.93.2",

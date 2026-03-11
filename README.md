@@ -4,16 +4,16 @@
 # Install dependencies
 npm install
 
-# Start development server (runs on default Vite port 5173)
+# Start development server (runs image conversion first)
 npm run dev
 
-# Build for production
+# Build for production (runs image conversion first)
 npm run build
 
 # Preview production build
 npm run preview
 
-# Convert JPEG/PNG images to WebP format
+# Convert JPEG/PNG images to WebP format only
 npm run convert-webp
 ```
 
@@ -24,6 +24,7 @@ npm run convert-webp
    { "date": "YYYY-MM-DD", "text": "hi" }
    ```
 2. `/src/data/images/` に画像を追加（`YYYY-MM-DD.jpg`）
+3. 必要なら `npm run convert-webp` でローカルの生成画像を更新
 
 CMS について：[iOS ファーストな CMS をショートカットで構築する](https://zenn.dev/yamatoiizuka/articles/79ad1b2099b966)
 
@@ -38,8 +39,9 @@ GitHub Actions でデプロイされる。
 
 補足:
 
-- WebP 生成物は `main` に commit しない
+- `public/images` の WebP 生成物は `main` に commit しない
 - 初回デプロイのみ cache を作るために全画像を変換する
+- `public/profile.webp` は静的アセットとして追跡する
 
 ## メモ
 

@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .webp-cache/
+public/images/
 
 # Editor directories and files
 .vscode/*

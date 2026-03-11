@@ -48,7 +48,7 @@ jobs:
 
       - name: Convert images to WebP
         id: convert
-        run: npm run convert-webp
+        run: npm run prepare-images
 
       - name: Save WebP cache
         if: steps.convert.outputs.changed == 'true'
@@ -63,7 +63,7 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Build
-        run: npm run build
+        run: npm run build:app
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
