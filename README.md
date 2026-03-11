@@ -31,8 +31,15 @@ CMS について：[iOS ファーストな CMS をショートカットで構築
 
 GitHub Actions でデプロイされる。
 
-1. `npm run convert-webp` を実行して画像を WebP に変換
-2. `npm run build` を実行してビルド
+1. `public/images` と `.webp-cache/manifest.json` を Actions cache から復元
+2. `npm run convert-webp` を実行し、manifest と異なる画像だけを WebP に変換
+3. `npm run build` を実行してビルド
+4. `dist` を Pages artifact としてデプロイ
+
+補足:
+
+- WebP 生成物は `main` に commit しない
+- 初回デプロイのみ cache を作るために全画像を変換する
 
 ## メモ
 
