@@ -19,9 +19,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      WEBP_CACHE_NAMESPACE: webp-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('package-lock.json', 'scripts/convert-to-webp.js') }}
-      WEBP_CACHE_KEY: webp-${{ runner.os }}-${{ github.ref_name }}-${{ hashFiles('package-lock.json', 'scripts/convert-to-webp.js') }}-${{ github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,6 +32,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set cache keys
+        id: cache-keys
+        run: |
+          NAMESPACE="webp-Linux-${{ github.ref_name }}-${{ hashFiles('package-lock.json', 'scripts/convert-to-webp.js') }}"
+          echo "namespace=$NAMESPACE" >> "$GITHUB_OUTPUT"
+          echo "key=$NAMESPACE-${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
       - name: Restore WebP cache
         id: webp-cache
         uses: actions/cache/restore@v4
@@ -42,9 +46,9 @@ jobs:
           path: |
             public/images
             .webp-cache
-          key: ${{ env.WEBP_CACHE_KEY }}
+          key: ${{ steps.cache-keys.outputs.key }}
           restore-keys: |
-            ${{ env.WEBP_CACHE_NAMESPACE }}-
+            ${{ steps.cache-keys.outputs.namespace }}-
 
       - name: Convert images to WebP
         id: convert
@@ -57,7 +61,7 @@ jobs:
           path: |
             public/images
             .webp-cache
-          key: ${{ env.WEBP_CACHE_KEY }}
+          key: ${{ steps.cache-keys.outputs.key }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
