@@ -1,3 +1,5 @@
+import { getEntryMonthKey } from "./entries";
+
 /**
  * 特定のエントリまでスクロールする
  * @param {Object} entry - スクロール先のエントリ
@@ -9,10 +11,14 @@ export const scrollToEntry = (entry, container, diaryEntries) => {
 
   const monthSections = container.querySelectorAll(".month-section");
   for (const section of monthSections) {
-    const monthIndex = parseInt(section.getAttribute("data-month"));
-    if (monthIndex === entry.month) {
-      const monthEntries = diaryEntries.filter((e) => e.month === monthIndex);
-      const entryIndex = monthEntries.findIndex((e) => e.day === entry.day);
+    const targetMonthKey = getEntryMonthKey(entry);
+    const sectionMonthKey = section.getAttribute("data-month-key");
+
+    if (sectionMonthKey === targetMonthKey) {
+      const monthEntries = diaryEntries.filter(
+        (e) => getEntryMonthKey(e) === targetMonthKey
+      );
+      const entryIndex = monthEntries.findIndex((e) => e.id === entry.id);
       if (entryIndex !== -1) {
         const sectionTop = section.offsetTop;
         const sectionHeight = section.offsetHeight;

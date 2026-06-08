@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { getDiaryEntryImageKey } from "../utils/entries";
 
 // ビルド時のタイムスタンプを取得（キャッシュバスティング用）
 const BUILD_VERSION =
@@ -19,10 +20,12 @@ export const useImagePreloader = (entries, currentIndex) => {
     if (!entries || entries.length === 0) return;
 
     // 画像URLを生成（キャッシュバスティング用のクエリパラメータ付き）
-    const getImageUrl = (entry) => `/images/${entry.date}.webp?v=${BUILD_VERSION}`;
+    const getImageUrl = (entry) =>
+      `/images/${getDiaryEntryImageKey(entry)}.webp?v=${BUILD_VERSION}`;
 
     // すでにプリロード済みかチェック
-    const isPreloaded = (entry) => preloadedImages.current.has(entry.date);
+    const isPreloaded = (entry) =>
+      preloadedImages.current.has(getDiaryEntryImageKey(entry));
 
     // 画像をプリロード
     const preloadImage = (entry) => {
@@ -36,7 +39,7 @@ export const useImagePreloader = (entries, currentIndex) => {
         img.src = getImageUrl(entry);
 
         img.onload = () => {
-          preloadedImages.current.add(entry.date);
+          preloadedImages.current.add(getDiaryEntryImageKey(entry));
           resolve();
         };
 

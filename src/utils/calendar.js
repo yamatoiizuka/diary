@@ -1,4 +1,7 @@
-import diaryData from "../data/entries.json";
+import {
+  getEntryMonthKey,
+  getNormalizedDiaryEntries,
+} from "./entries";
 
 /**
  * 月名の配列（英語大文字）
@@ -25,16 +28,14 @@ export const monthNames = [
  */
 export const getAvailableMonths = () => {
   const monthsSet = new Set();
-  diaryData.forEach((entry) => {
-    const date = new Date(entry.date);
-    const yearMonth = `${date.getFullYear()}-${date.getMonth()}`;
-    monthsSet.add(yearMonth);
+  getNormalizedDiaryEntries().forEach((entry) => {
+    monthsSet.add(getEntryMonthKey(entry));
   });
 
   return Array.from(monthsSet)
     .map((yearMonth) => {
       const [year, month] = yearMonth.split("-").map(Number);
-      return { year, month };
+      return { year, month: month - 1 };
     })
     .sort((a, b) => {
       if (a.year !== b.year) return a.year - b.year;
@@ -49,10 +50,9 @@ export const getAvailableMonths = () => {
  * @returns {Array<Object>} 該当月の日記エントリの配列
  */
 export const getEntriesForMonth = (year, month) => {
-  return diaryData.filter((entry) => {
-    const date = new Date(entry.date);
-    return date.getFullYear() === year && date.getMonth() === month;
-  });
+  return getNormalizedDiaryEntries().filter(
+    (entry) => entry.year === year && entry.month === month
+  );
 };
 
 /**
@@ -101,16 +101,17 @@ export const createCalendarMonth = (year, month) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
       day
     ).padStart(2, "0")}`;
-    const entry = monthEntries.find((e) => e.date === dateStr);
+    const dayEntries = monthEntries.filter((entry) => entry.date === dateStr);
 
     days.push({
-      key: `day-${month}-${day}`,
+      key: `day-${year}-${month}-${day}`,
       day,
       month,
       year,
       date: dateStr,
-      hasDiary: !!entry,
-      entry: entry || null,
+      hasDiary: dayEntries.length > 0,
+      entry: dayEntries[0] || null,
+      entries: dayEntries,
     });
   }
 
@@ -141,18 +142,5 @@ export const createCalendarMonth = (year, month) => {
  * @returns {Array<Object>} 年月日情報が追加された日記エントリの配列（日付昇順）
  */
 export const getAllDiaryEntries = () => {
-  return diaryData
-    .map((entry) => {
-      const date = new Date(entry.date);
-      return {
-        ...entry,
-        month: date.getMonth(),
-        day: date.getDate(),
-        year: date.getFullYear(),
-      };
-    })
-    .sort((a, b) => {
-      // 日付文字列で比較（YYYY-MM-DD形式なので文字列比較で大丈夫）
-      return a.date.localeCompare(b.date);
-    });
+  return getNormalizedDiaryEntries();
 };
