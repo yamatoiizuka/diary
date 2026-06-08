@@ -5,6 +5,7 @@ import {
   getAllDiaryEntries,
   getAvailableMonths,
 } from "./utils/calendar";
+import { getDiaryEntryImageKey } from "./utils/entries";
 import { scrollToEntry } from "./utils/scrollHelpers";
 import AllTextPreloader from "./components/AllTextPreloader";
 import AboutModal from "./components/AboutModal";
@@ -30,6 +31,14 @@ function App() {
   const isAutoScrollingRef = useRef(false);
 
   const activeEntry = diaryEntries[currentIndex] || {};
+  const activeImageKey = getDiaryEntryImageKey(activeEntry);
+  const activeEntryJson = activeEntry.id
+    ? JSON.stringify({
+        id: activeEntry.id,
+        date: activeEntry.date,
+        image: activeImageKey,
+      }).replace(/</g, "\\u003c")
+    : "";
 
   // 画像のプリロード（最新から順番にバックグラウンドで読み込み）
   useImagePreloader(diaryEntries, currentIndex);
@@ -66,11 +75,13 @@ function App() {
     }
   }, []);
 
-  // アクティブなエントリの日付をtitleに設定
+  // アクティブなエントリIDをショートカット連携用に公開
   useEffect(() => {
-    if (activeEntry?.date) {
-      document.title = activeEntry.date;
-    }
+    if (!activeEntry?.id) return;
+
+    document.title = `diary:${activeEntry.id}`;
+    document.documentElement.dataset.diaryActiveId = activeEntry.id;
+    document.documentElement.dataset.diaryActiveDate = activeEntry.date ?? "";
   }, [activeEntry]);
 
   // データが存在する月のみカレンダーを生成
@@ -91,8 +102,8 @@ function App() {
           <div className="image-container">
             <div className="image-wrapper">
               <img
-                src={`/images/${activeEntry.date}.webp?v=${BUILD_VERSION}`}
-                alt={activeEntry.date}
+                src={`/images/${activeImageKey}.webp?v=${BUILD_VERSION}`}
+                alt={`${activeEntry.date} ${activeEntry.id}`}
                 className="header-image"
                 width={2000}
                 height={1500}
@@ -114,43 +125,54 @@ function App() {
         )}
       </div>
 
-      <main className={`calendar-container ${isScrolling ? "is-scrolling" : ""}`} ref={containerRef}>
-        {months.map((month, monthIndex) => {
+      <main
+        className={`calendar-container ${isScrolling ? "is-scrolling" : ""}`}
+        ref={containerRef}
+      >
+        {months.map((month) => {
           const monthKey = `${month.year}-${String(month.month + 1).padStart(2, "0")}`;
           const isActiveMonth = activeMonth === monthKey;
           return (
             <div
-              key={monthIndex}
+              key={monthKey}
               className="month-section"
               data-month={month.month}
-              style={{ visibility: isScrolling || isActiveMonth ? "visible" : "hidden" }}
+              data-month-key={monthKey}
+              style={{
+                visibility: isScrolling || isActiveMonth ? "visible" : "hidden",
+              }}
             >
               <h2 className="month-title">{month.name}</h2>
               <div className="calendar-grid">
-                {month.days.map((day) => (
-                  <div
-                    key={day.key}
-                    className={`calendar-day ${
-                      day.empty ? "other-month" : ""
-                    } ${day.hasDiary ? "has-diary" : ""} ${
-                      day.hasDiary &&
-                      activeEntry &&
-                      activeEntry.date === day.date
-                        ? "active"
-                        : ""
-                    }`}
-                    data-day={day.day}
-                  >
-                    {!day.empty && day.hasDiary && (
-                      <>
-                        <span className="day-circle"></span>
-                        {activeEntry && activeEntry.date === day.date && (
-                          <span className="day-number">{day.day}</span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
+                {month.days.map((day) => {
+                  const entryCount = day.entries?.length ?? 0;
+                  const isActiveDay =
+                    day.hasDiary &&
+                    activeEntry?.id &&
+                    day.entries?.some((entry) => entry.id === activeEntry.id);
+
+                  return (
+                    <div
+                      key={day.key}
+                      className={`calendar-day ${
+                        day.empty ? "other-month" : ""
+                      } ${day.hasDiary ? "has-diary" : ""} ${
+                        isActiveDay ? "active" : ""
+                      }`}
+                      data-day={day.day}
+                      data-entry-count={entryCount}
+                    >
+                      {!day.empty && day.hasDiary && (
+                        <>
+                          <span className="day-circle"></span>
+                          {isActiveDay && (
+                            <span className="day-number">{day.day}</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
@@ -159,33 +181,43 @@ function App() {
 
       {/* Web フォント読み込みのため CSS で表示を切り替え */}
       {!isScrolling && (
-      <nav className="navigation">
-        <div className="nav-item" onClick={() => setIsPlaying(!isPlaying)}>
-          <span style={{ display: isPlaying ? "inline" : "none" }}>
-            一時停止
-          </span>
-          <span style={{ display: !isPlaying ? "inline" : "none" }}>
-            プレイ
-          </span>
-        </div>
+        <nav className="navigation">
+          <div className="nav-item" onClick={() => setIsPlaying(!isPlaying)}>
+            <span style={{ display: isPlaying ? "inline" : "none" }}>
+              一時停止
+            </span>
+            <span style={{ display: !isPlaying ? "inline" : "none" }}>
+              プレイ
+            </span>
+          </div>
 
-        <div className="nav-item" onClick={() => setShowText(!showText)}>
-          <span style={{ display: showText ? "inline" : "none" }}>
-            画像のみ表示
-          </span>
-          <span style={{ display: !showText ? "inline" : "none" }}>
-            テキスト表示
-          </span>
-        </div>
+          <div className="nav-item" onClick={() => setShowText(!showText)}>
+            <span style={{ display: showText ? "inline" : "none" }}>
+              画像のみ表示
+            </span>
+            <span style={{ display: !showText ? "inline" : "none" }}>
+              テキスト表示
+            </span>
+          </div>
 
-        <div className="nav-item" onClick={() => setIsAboutOpen(true)}>
-          何
-        </div>
-      </nav>
+          <div className="nav-item" onClick={() => setIsAboutOpen(true)}>
+            何
+          </div>
+        </nav>
       )}
 
       {/* Aboutモーダル */}
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
+
+      {activeEntry.id && (
+        <script
+          id="diary-active-entry"
+          type="application/json"
+          dangerouslySetInnerHTML={{
+            __html: activeEntryJson,
+          }}
+        />
+      )}
 
       {/* 全テキストコンテンツの事前レンダリング（非表示） */}
       <AllTextPreloader entries={diaryEntries} />

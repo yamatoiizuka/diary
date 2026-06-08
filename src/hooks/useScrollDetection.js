@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { getEntryMonthKey } from "../utils/entries";
 
 /**
  * 手動スクロール時にビューポート中心に最も近いエントリを検出するカスタムフック
@@ -76,11 +77,13 @@ export const useScrollDetection = ({
       // 各月のセクションをチェック
       const monthSections = container.querySelectorAll(".month-section");
       monthSections.forEach((section) => {
-        const monthIndex = parseInt(section.getAttribute("data-month"));
-        const monthEntries = diaryEntries.filter((e) => e.month === monthIndex);
+        const monthKey = section.getAttribute("data-month-key");
+        const monthEntries = diaryEntries.filter(
+          (entry) => getEntryMonthKey(entry) === monthKey
+        );
 
         monthEntries.forEach((entry, idx) => {
-          const entryIndex = diaryEntries.findIndex((e) => e === entry);
+          const entryIndex = diaryEntries.findIndex((e) => e.id === entry.id);
           const sectionTop = section.offsetTop;
           const sectionHeight = section.offsetHeight;
 

@@ -50,6 +50,9 @@ jobs:
           restore-keys: |
             ${{ steps.cache-keys.outputs.namespace }}-
 
+      - name: Validate diary data
+        run: npm run validate-data
+
       - name: Convert images to WebP
         id: convert
         run: npm run prepare-images
