@@ -2,6 +2,8 @@
 
 This project treats each diary post as its own JSON file. Shortcuts should not update `src/data/entries.json` for new writes.
 
+After this migration, old Shortcuts that update `src/data/entries.json` must not be used. If `src/data/entries/*.json` exists, the app runs in split mode and ignores new records added only to `entries.json`.
+
 ## Entry Shape
 
 ```json
@@ -16,6 +18,8 @@ This project treats each diary post as its own JSON file. Shortcuts should not u
 ```
 
 Use `date` only for calendar display. Use `id` for edit, delete, image lookup, and DOM integration.
+
+New entries should always include `createdAt` and `updatedAt`. Legacy migrated entries may omit them, but same-day multiple entries should include `createdAt` so ordering inside the day is stable.
 
 ## Create
 
@@ -38,6 +42,8 @@ Create does not update a central index, so two quick posts write different files
 
 The page DOM is only a target identifier source. Do not use page text as the edit placeholder. Fetch the current entry JSON from GitHub Contents API.
 
+`#diary-active-entry` is only for identifying the active entry and does not include `text`. The edit placeholder must come from the GitHub Contents API response for `src/data/entries/${id}.json`; DOM text can be stale and must not be used.
+
 ## Delete
 
 1. Read the active `id`.
@@ -52,3 +58,8 @@ The page DOM is only a target identifier source. Do not use page text as the edi
 - Do not use page text as the edit placeholder source.
 - Do not identify edit targets by `date` alone.
 - Do not ignore stale `409` responses.
+- Do not use old Shortcuts that update `src/data/entries.json`.
+
+## Legacy Fallback
+
+`src/data/entries.json` remains as a temporary fallback for pre-migration builds where `src/data/entries/*.json` does not exist. In split mode, `src/data/entries/*.json` is the source of truth; new writes must create or update files there. The fallback is expected to be removed in a future cleanup.

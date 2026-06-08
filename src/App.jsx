@@ -36,7 +36,6 @@ function App() {
     ? JSON.stringify({
         id: activeEntry.id,
         date: activeEntry.date,
-        text: activeEntry.text,
         image: activeImageKey,
       }).replace(/</g, "\\u003c")
     : "";
@@ -145,30 +144,35 @@ function App() {
             >
               <h2 className="month-title">{month.name}</h2>
               <div className="calendar-grid">
-                {month.days.map((day) => (
-                  <div
-                    key={day.key}
-                    className={`calendar-day ${
-                      day.empty ? "other-month" : ""
-                    } ${day.hasDiary ? "has-diary" : ""} ${
-                      day.hasDiary &&
-                      activeEntry &&
-                      activeEntry.date === day.date
-                        ? "active"
-                        : ""
-                    }`}
-                    data-day={day.day}
-                  >
-                    {!day.empty && day.hasDiary && (
-                      <>
-                        <span className="day-circle"></span>
-                        {activeEntry && activeEntry.date === day.date && (
-                          <span className="day-number">{day.day}</span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
+                {month.days.map((day) => {
+                  const entryCount = day.entries?.length ?? 0;
+                  const isActiveDay =
+                    day.hasDiary &&
+                    activeEntry?.id &&
+                    day.entries?.some((entry) => entry.id === activeEntry.id);
+
+                  return (
+                    <div
+                      key={day.key}
+                      className={`calendar-day ${
+                        day.empty ? "other-month" : ""
+                      } ${day.hasDiary ? "has-diary" : ""} ${
+                        isActiveDay ? "active" : ""
+                      }`}
+                      data-day={day.day}
+                      data-entry-count={entryCount}
+                    >
+                      {!day.empty && day.hasDiary && (
+                        <>
+                          <span className="day-circle"></span>
+                          {isActiveDay && (
+                            <span className="day-number">{day.day}</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );

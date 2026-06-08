@@ -35,22 +35,32 @@ async function loadEntries() {
       const value = await readJsonFile(join(entriesDir, file));
       entries.push({ source, value });
     }
-    return { mode: "split", entries };
+    const legacyEntries = existsSync(legacyEntriesPath)
+      ? await loadLegacyEntries()
+      : [];
+
+    return { mode: "split", entries, legacyEntries };
   }
 
-  const legacyEntries = await readJsonFile(legacyEntriesPath);
-  if (!Array.isArray(legacyEntries)) {
-    addError("src/data/entries.json must be an array while fallback mode is active.");
-    return { mode: "legacy", entries: [] };
-  }
-
+  const legacyEntries = await loadLegacyEntries();
   return {
     mode: "legacy",
-    entries: legacyEntries.map((value, index) => ({
-      source: `src/data/entries.json[${index}]`,
-      value,
-    })),
+    entries: legacyEntries,
+    legacyEntries: [],
   };
+}
+
+async function loadLegacyEntries() {
+  const legacyEntries = await readJsonFile(legacyEntriesPath);
+  if (!Array.isArray(legacyEntries)) {
+    addError("src/data/entries.json must be an array.");
+    return [];
+  }
+
+  return legacyEntries.map((value, index) => ({
+    source: `src/data/entries.json[${index}]`,
+    value,
+  }));
 }
 
 function isValidDate(date) {
@@ -108,20 +118,89 @@ function normalizeEntry({ source, value }) {
     }
   }
 
+  if (
+    value.image !== undefined &&
+    (typeof value.image !== "string" || value.image.trim() === "")
+  ) {
+    addError(`${source}: image must be a non-empty string when present.`);
+  }
+
   return {
     source,
     id,
     date: value.date,
+    text: value.text,
     image: value.image ?? id,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
   };
 }
 
+function getDateTextKey(value) {
+  if (typeof value.date !== "string" || typeof value.text !== "string") {
+    return null;
+  }
+
+  return `${value.date}\u0000${value.text}`;
+}
+
+function checkLegacyDrift(legacyEntries, splitEntries) {
+  if (legacyEntries.length === 0) return;
+
+  const splitDateTextKeys = new Set(
+    splitEntries.map(getDateTextKey).filter(Boolean)
+  );
+  const driftEntries = [];
+
+  for (const entry of legacyEntries) {
+    const { source, value } = entry;
+
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      addError(`${source}: legacy drift check requires an entry object.`);
+      continue;
+    }
+
+    const dateTextKey = getDateTextKey(value);
+    if (!dateTextKey) {
+      addError(`${source}: legacy drift check requires date and text strings.`);
+      continue;
+    }
+
+    if (!splitDateTextKeys.has(dateTextKey)) {
+      driftEntries.push({
+        source,
+        id: value.id ?? value.date ?? "(missing id)",
+        date: value.date ?? "(missing date)",
+      });
+    }
+  }
+
+  if (driftEntries.length === 0) return;
+
+  const examples = driftEntries
+    .slice(0, 5)
+    .map((entry) => `${entry.source} (${entry.id}, ${entry.date})`)
+    .join(", ");
+  const remaining =
+    driftEntries.length > 5 ? ` and ${driftEntries.length - 5} more` : "";
+
+  addError(
+    `src/data/entries.json contains entries that do not exist in src/data/entries/*.json: ${examples}${remaining}. ` +
+      "This may mean an old iOS Shortcut updated the legacy entries.json after split-mode migration. " +
+      "Create src/data/entries/${id}.json instead and stop updating entries.json."
+  );
+}
+
 async function main() {
-  const { mode, entries } = await loadEntries();
+  const { mode, entries, legacyEntries } = await loadEntries();
   const imageBasenames = await getImageBasenames();
   const normalizedEntries = entries.map(normalizeEntry).filter(Boolean);
   const ids = new Map();
   const dates = new Map();
+
+  if (mode === "split") {
+    checkLegacyDrift(legacyEntries, normalizedEntries);
+  }
 
   for (const entry of normalizedEntries) {
     if (typeof entry.id === "string") {
@@ -138,21 +217,30 @@ async function main() {
       if (!dates.has(entry.date)) {
         dates.set(entry.date, []);
       }
-      dates.get(entry.date).push(entry.source);
+      dates.get(entry.date).push(entry);
     }
 
     if (typeof entry.image === "string" && !imageBasenames.has(entry.image)) {
-      addWarning(
+      addError(
         `${entry.source}: missing source image src/data/images/${entry.image}.{jpg,jpeg,png}.`
       );
     }
   }
 
-  for (const [date, sources] of dates) {
-    if (sources.length > 1) {
+  for (const [date, dateEntries] of dates) {
+    if (dateEntries.length > 1) {
       addWarning(
-        `Duplicate date "${date}" appears in ${sources.length} entries (${mode} mode allows this; ids must remain unique).`
+        `Duplicate date "${date}" appears in ${dateEntries.length} entries (${mode} mode allows this; ids must remain unique).`
       );
+
+      const missingCreatedAt = dateEntries
+        .filter((entry) => !entry.createdAt)
+        .map((entry) => entry.source);
+      if (missingCreatedAt.length > 0) {
+        addError(
+          `Entries sharing date "${date}" must include createdAt for stable same-day ordering: ${missingCreatedAt.join(", ")}.`
+        );
+      }
     }
   }
 
